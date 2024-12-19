@@ -1,17 +1,12 @@
 # Chapter6 카프카 내부 메커니즘
 
-<aside>
-💡
-
-이번 장에서 공부할 내용
+< 이번 장에서 공부할 내용 >
 
 - 카프카 복제(replication) 동작 방식
 - 카프카가 프로듀서와 컨슈머 요청을 처리하는 방법
 - 카프카가 스토리지(ex. 파일 형식, 인덱스)를 처리하는 방법
 
 + Zookeeper가 아닌 Kraft 동작 방식
-
-</aside>
 
 ## 클러스터 멤버십
 
@@ -188,10 +183,8 @@ get /controller
     - OffsetCommit, OffsetFetch, ListOffsets 요청이 프로토콜에 추가됨. (주키퍼를 쓰지 않고 클라이언트 API에서 해당 요청을 써도 됨)
 - 클라이언트 버전을 업그레이드 하기 전에 브로커 버전을 먼저 업그레이드할 것
 
-<aside>
-💡
 
-**Zookeeper → Kraft**
+< Zookeeper → Kraft >
 
 주키퍼는 기존 Kafka의 메타데이터 관리 도구로 사용되었으나 여러 문제점을 가지고 있었음.
 
@@ -222,8 +215,6 @@ https://romanglushach.medium.com/the-evolution-of-kafka-architecture-from-zookee
 https://devocean.sk.com/blog/techBoardDetail.do?ID=165711&boardType=techBlog
 
 https://kafka.apache.org/documentation/#kraft
-
-</aside>
 
 ## 스토리지
 
@@ -266,15 +257,10 @@ https://kafka.apache.org/documentation/#kraft
 - 디렉터리 결정
     - 각 디렉터리의 파티션 개수를 계산하고 가장 적은 수의 파티션을 갖는 디렉터리에 새 파티션을 추가
     
-    <aside>
-    💡
-    
     디스크 공간에 유의하자
     
     - 브로커에 파티션을 할당할 때는 사용 가능한 디스크 공간이나 기존의 사용량이 고려되지 않음
     - 파티션을 디스크에 할당할 때 파티션 크기가 아닌 개수가 고려 대상이 됨
-    </aside>
-    
 
 ## 파일 관리
 
