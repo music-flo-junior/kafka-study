@@ -32,25 +32,27 @@
 
 ### 3주차 2024.12.19 (목)
 
-- [Chapter5 카프카 내부 메커니즘](docs/chapter_5.md)
-- [Chapter6 신뢰성 있는 데이터 전달](docs/chapter_6.md)
+- [Chapter5 프로그램 내에서 코드로 카프카 관리하기](docs/chapter_5.md)
+- [Chapter6 카프카 내부 메커니즘](docs/chapter_6.md)
 
 ### 4주차 2024.12.26 (목)
 
-- [Chapter7 데이터 파이프라인 구축하기](docs/chapter_7.md)
-- [Chapter8 크로스 클러스터 데이터 미러링](docs/chapter_8.md)
+- [Chapter7 신뢰성 있는 데이터 전달](docs/chapter_7.md)
+- [Chapter8 '정확히 한번‘ 의미 구조](docs/chapter_8.md)
 
 ### 5주차 2024.1.2(목)
 
-- [Chapter9 카프카 관리하기](docs/chapter_9.md)
-- [Chapter10 카프카 모니터링](docs/chapter_10.md)
+- [Chapter9 데이터 파이프라인 구축하기](docs/chapter_9.md)
+- [Chapter10 클러스터간 데이터 미러링](docs/chapter_10.md)
 
 ### 6주차 2024.1.9(목)
 
-- [Chapter11 스트림 프로세싱](docs/chapter_11.md)
-- 첨부 다른 운영체제에 카프카 설치하기
+- [Chapter11 보안](docs/chapter_11.md)
+- [Chapter12 카프카 운영하기](docs/chapter_12.md)
 
 ### 7주차 2024.1.16(목)
 
+- [Chapter13 카프카 모니터링](docs/chapter_13.md)
+- [Chapter14 스트림 프로세싱](docs/chapter_14.md)
 - 회고
 - 혹시 밀린게 있다면 진행
