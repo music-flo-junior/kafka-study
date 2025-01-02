@@ -1,11 +1,17 @@
 # Chapter6 카프카 내부 메커니즘
 
-< 이번 장에서 공부할 내용 >
+<aside>
+💡
 
-- 카프카 컨트롤러
+이번 장에서 공부할 내용
+
 - 카프카 복제(replication) 동작 방식
 - 카프카가 프로듀서와 컨슈머 요청을 처리하는 방법
-- 카프카가 저장을 처리하는 방식 (파일 형식, 인덱스 등)
+- 카프카가 스토리지(ex. 파일 형식, 인덱스)를 처리하는 방법
+
++ Zookeeper가 아닌 Kraft 동작 방식
+
+</aside>
 
 ## 클러스터 멤버십
 
@@ -51,7 +57,6 @@ ls /music/event
 
 ## 컨트롤러
 
-### Zookeeper
 - 클러스터를 시작하는 첫 번째 브로커가 컨트롤러
 - controller 브로커는 어떻게 생성되고 변경되는걸 알까?
     - 모든 브로커는 /controller 노드에 주키퍼의 watch를 생성
@@ -75,67 +80,6 @@ ls /
 get /controller
 {"version":2,"brokerid":3,"timestamp":"1733881780507","kraftControllerEpoch":-1}
 ```
-
-### (참고) Zookeeper vs Kraft
-
-< Zookeeper → Kraft >
-
-주키퍼는 기존 Kafka의 메타데이터 관리 도구로 사용되었으나 여러 문제점을 가지고 있었음.
-
-- 확장성: Kafka 클러스터의 크기와 트래픽이 증가함에 따라 Zookeeper가 병목현상이 되어 카프카 성능에 영향을 미치는 경우가 있음
-- 복잡성: Zookeeper는 Kafka 아키텍처에 또 다른 계층을 추가하여 복잡성과 종속성을 추가했음. (Kafka와 별도로 Zookeeper를 설치, 구성, 모니터링 및 문제 해결을 해야 했음 ex. 이번 Amazon 이미지 업그레이드 관련 건 등)
-- 일관성: Zookeeper가 모든 요청을 처리하기 위해 사용 가능한 노드의 쿼럼을 필요로 하기 때문에 장애 상황에서 Kafka 가용성에 영향을 미칠 수 있음
-
-![image 4](https://github.com/user-attachments/assets/09e83908-e14a-4823-abb8-d4c2bf4dc5e5)
-
-
-이런 Zookeeper의 여러 문제를 해결한게 ‘Kraft’임. Kraft의 장점은 아래와 같음
-
-- 단순성: Kafka의 아키텍처 단순화
-- 확장성: 메타데이터 저장소 부하를 줄여 확장성 개선
-- 가용성: 부분적 오류를 허용하여 가용성 향상, 모든 요청을 처리하는데 컨트롤러 쿼럼만 필요
-- 간소화된 배포 및 관리: Zookeeper 클러스터를 실행하고 유지할 필요가 없음
-- 보안 강화: SSL/TLS로 클라이언트-서버 통신 암호화 및 인증 지원
-
-트레이드 오프: 호환성 (Zookeeper와 호환되지 않음), 일관성 (특정 경우_컨트롤러가 바뀔 때 오래되거나 일관되지 않은 메타 데이터를 볼 수 있음)
-
-![image 5](https://github.com/user-attachments/assets/88306bb0-2c04-49c0-a49f-1b3b97d9dc66)
-
-Kafka 2.8부터는 Kraft 모드를 활성화 해서 사용할 수 있음. 또한 Kafka 3.5 부터는 Zookeeper 모드는 사용되지 않으며 Kafka 4.0부터는 Zookeeper가 완전히 제거됨.
-
-참고자료
-https://romanglushach.medium.com/the-evolution-of-kafka-architecture-from-zookeeper-to-kraft-f42d511ba242
-
-https://devocean.sk.com/blog/techBoardDetail.do?ID=165711&boardType=techBlog
-
-https://kafka.apache.org/documentation/#kraft
-
-
-### Kraft: 카프카의 새로운 래프드 기반 컨트롤러
-- preview 버전: 아파치 카프카 2.8
-> dev 기준 현재 우리의 버전은? 
-> docker image cp-kafka:7.0.1 -> kafka 3.0.x
-> https://docs.confluent.io/platform/7.0/installation/versions-interoperability.html
-- 왜 카프카 커뮤니티는 컨트롤러를 교체하기로 결정했을까?
-  1. 데이터 불일치
-  컨트롤러가 주키퍼에 메타데이터를 쓰는 작업: 동기 / 브로커 메시지를 보내는 작업: 비동기 / 주키퍼 업데이트 받는 과정: 비동기
-  -> 브로커, 컨트롤러, 주키퍼 간에 메타데이터 불일치가 있을 수 있으며 잡아내기도 어려움.
-  2. 재시작 성능
-  컨트롤러가 재시작될 때마다 주키퍼로부터 모든 브로커와 파티션에 대한 메타데이터 갱신처리 후 모든 브로커로 전송 -> 병목
-  3. 아키텍처가 복잡함
-  메타데이터 소유권 관련 내부 아키텍처가 복잡하다. 어떤 작업은 컨트롤러가 하고 다른 건 브로커가 하고, 나머지는 주키퍼가 직접함.
-  4. 운영 어려움
-  주키퍼는 그 자체로 분산시스템이며 어느정도 기반지식이 있어야 한다. 이런 점에 러닝커브와 운영의 어려움이 있을 수 있다.
-  
-- Kraft 핵심 아이디어: 사용자가 상태를 이벤트 스트림으로 나타낼 수 있도록 하는 로그 기반 아키텍처를 도입
-- Kraft에서는 컨트롤러 노드들은 메타데이터 이벤트 로그를 관리하는 래프트 쿼럼이 된다. 이 로그는 클러스터 메타데이터의 변경 내역을 저장
-- 래프트 알고리즘을 사용하여 컨트롤러 노드들은 자체적으로 리더를 선출할 수 있게 됨
-- 메타데이터 로그의 리더 역할을 맡고 있는 컨트롤러는 `액티브 컨트롤러` 라고 부름
-- 액티브 컨트롤러가 브로커가 보내온 모든 RPC 호출을 처리하고 팔로워 컨트롤러들은 액티브 컨트롤러에 쓰여진 데이터를 복제
-- 브로커 프로세스는 시작 시 주키퍼가 아닌 '컨트롤러 쿼럼'에 등록
-- Zookeeper -> Kraft 마이그레이션
-  - 브리지 릴리스(Bridge Release) 제공
-
 
 ## 복제
 
@@ -244,6 +188,43 @@ https://kafka.apache.org/documentation/#kraft
     - OffsetCommit, OffsetFetch, ListOffsets 요청이 프로토콜에 추가됨. (주키퍼를 쓰지 않고 클라이언트 API에서 해당 요청을 써도 됨)
 - 클라이언트 버전을 업그레이드 하기 전에 브로커 버전을 먼저 업그레이드할 것
 
+<aside>
+💡
+
+**Zookeeper → Kraft**
+
+주키퍼는 기존 Kafka의 메타데이터 관리 도구로 사용되었으나 여러 문제점을 가지고 있었음.
+
+- 확장성: Kafka 클러스터의 크기와 트래픽이 증가함에 따라 Zookeeper가 병목현상이 되어 카프카 성능에 영향을 미치는 경우가 있음
+- 복잡성: Zookeeper는 Kafka 아키텍처에 또 다른 계층을 추가하여 복잡성과 종속성을 추가했음. (Kafka와 별도로 Zookeeper를 설치, 구성, 모니터링 및 문제 해결을 해야 했음 ex. 이번 Amazon 이미지 업그레이드 관련 건 등)
+- 일관성: Zookeeper가 모든 요청을 처리하기 위해 사용 가능한 노드의 쿼럼을 필요로 하기 때문에 장애 상황에서 Kafka 가용성에 영향을 미칠 수 있음
+
+![image 4](https://github.com/user-attachments/assets/09e83908-e14a-4823-abb8-d4c2bf4dc5e5)
+
+
+이런 Zookeeper의 여러 문제를 해결한게 ‘Kraft’임. Kraft의 장점은 아래와 같음
+
+- 단순성: Kafka의 아키텍처 단순화
+- 확장성: 메타데이터 저장소 부하를 줄여 확장성 개선
+- 가용성: 부분적 오류를 허용하여 가용성 향상, 모든 요청을 처리하는데 컨트롤러 쿼럼만 필요
+- 간소화된 배포 및 관리: Zookeeper 클러스터를 실행하고 유지할 필요가 없음
+- 보안 강화: SSL/TLS로 클라이언트-서버 통신 암호화 및 인증 지원
+
+트레이드 오프: 호환성 (Zookeeper와 호환되지 않음), 일관성 (특정 경우_컨트롤러가 바뀔 때 오래되거나 일관되지 않은 메타 데이터를 볼 수 있음)
+
+![image 5](https://github.com/user-attachments/assets/88306bb0-2c04-49c0-a49f-1b3b97d9dc66)
+
+Kafka 2.8부터는 Kraft 모드를 활성화 해서 사용할 수 있음. 또한 Kafka 3.5 부터는 Zookeeper 모드는 사용되지 않으며 Kafka 4.0부터는 Zookeeper가 완전히 제거됨.
+
+참고자료
+https://romanglushach.medium.com/the-evolution-of-kafka-architecture-from-zookeeper-to-kraft-f42d511ba242
+
+https://devocean.sk.com/blog/techBoardDetail.do?ID=165711&boardType=techBlog
+
+https://kafka.apache.org/documentation/#kraft
+
+</aside>
+
 ## 스토리지
 
 - 파티션 리플리카: 카프카의 기본적인 스토리지 단위
@@ -285,10 +266,15 @@ https://kafka.apache.org/documentation/#kraft
 - 디렉터리 결정
     - 각 디렉터리의 파티션 개수를 계산하고 가장 적은 수의 파티션을 갖는 디렉터리에 새 파티션을 추가
     
+    <aside>
+    💡
+    
     디스크 공간에 유의하자
     
     - 브로커에 파티션을 할당할 때는 사용 가능한 디스크 공간이나 기존의 사용량이 고려되지 않음
     - 파티션을 디스크에 할당할 때 파티션 크기가 아닌 개수가 고려 대상이 됨
+    </aside>
+    
 
 ## 파일 관리
 
