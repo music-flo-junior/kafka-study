@@ -1,0 +1,9 @@
+{
+  "name": "dump-temp-text",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.file.FileStreamSinkConnector",
+    "tasks.max": "1",
+    "file": "/init/copy-load-text-file.txt",
+    "topics": "file-topic"
+  }
+}
